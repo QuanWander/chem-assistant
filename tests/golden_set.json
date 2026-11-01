@@ -40,6 +40,30 @@
     [
       "NaHCO3 -> Na2CO3 + H2O + CO2",
       "2NaHCO3 -> Na2CO3 + H2O + CO2"
+    ],
+    [
+      "Ca(OH)2 + CO2 -> CaCO3 + H2O",
+      "Ca(OH)2 + CO2 -> CaCO3 + H2O"
+    ],
+    [
+      "Na2O2 + H2O -> NaOH + O2",
+      "2Na2O2 + 2H2O -> 4NaOH + O2"
+    ],
+    [
+      "Fe + H2O -> Fe3O4 + H2",
+      "3Fe + 4H2O -> Fe3O4 + 4H2"
+    ],
+    [
+      "Cu + HNO3 -> Cu(NO3)2 + NO2 + H2O",
+      "Cu + 4HNO3 -> Cu(NO3)2 + 2NO2 + 2H2O"
+    ],
+    [
+      "NH4Cl + Ca(OH)2 -> CaCl2 + NH3 + H2O",
+      "2NH4Cl + Ca(OH)2 -> CaCl2 + 2NH3 + 2H2O"
+    ],
+    [
+      "C2H5OH + O2 -> CO2 + H2O",
+      "C2H5OH + 3O2 -> 2CO2 + 3H2O"
     ]
   ],
   "molar_mass": [

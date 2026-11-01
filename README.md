@@ -78,11 +78,11 @@ git clone https://github.com/QuanWander/chem-assistant
 
 ```bash
 python -m unittest discover -s tests -v      # 核心 68 个用例
-python tests/run_golden.py                   # 确定性 golden set 41 项
+python tests/run_golden.py                   # 确定性 golden set 47 项
 python tests/smoke_adapter.py                # 适配器冒烟（需装 AstrBot 依赖）
 ```
 
-当前 68 个核心用例 + 8 个适配器冒烟 + 41 项 golden set，覆盖解析、配平、计量、安全、检索、回答结构。
+当前 68 个核心用例 + 8 个适配器冒烟 + 47 项 golden set，覆盖解析、配平、计量、安全、检索、回答结构。
 
 ## 其他平台怎么接
 
