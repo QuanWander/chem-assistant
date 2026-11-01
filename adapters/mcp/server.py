@@ -158,7 +158,7 @@ def handle(request: dict) -> dict | None:
 
 def main() -> None:
     for line in sys.stdin:
-        line = line.strip()
+        line = line.strip().lstrip("\ufeff")
         if not line:
             continue
         try:
