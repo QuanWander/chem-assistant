@@ -25,17 +25,26 @@ try:
 except Exception:  # pragma: no cover - 老版本兜底
     TextPart = None  # type: ignore[assignment]
 
-from chemcore import ChemError, acidbase, balance_equation, parse_formula, stoich
-from chemcore.policy import check_safety, lab_safety_note
-from chemcore.retrieval import search
-from chemcore.service import build_context, card_to_text, looks_like_chemistry
+try:
+    # AstrBot 以包模块加载插件时走相对导入：chemcore 会随插件一起卸载/重载，
+    # 不会留在 sys.modules 里变成旧代码。
+    from .chemcore import ChemError, acidbase, balance_equation, parse_formula, stoich
+    from .chemcore.policy import check_safety, lab_safety_note
+    from .chemcore.retrieval import search
+    from .chemcore.service import build_context, card_to_text, looks_like_chemistry
+except ImportError:  # 直接跑 main.py / 冒烟测试时没有包上下文
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from chemcore import ChemError, acidbase, balance_equation, parse_formula, stoich
+    from chemcore.policy import check_safety, lab_safety_note
+    from chemcore.retrieval import search
+    from chemcore.service import build_context, card_to_text, looks_like_chemistry
 
 
 @register(
     "astrbot_plugin_chem_assistant",
     "大肥鱼",
     "化学助教：初三/高中，人教版，会算、会查、不确定会直说",
-    "0.1.6",
+    "0.1.7",
 )
 class ChemAssistant(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None) -> None:
