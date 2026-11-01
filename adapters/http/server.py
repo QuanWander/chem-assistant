@@ -28,11 +28,15 @@ from chemcore.service import build_context
 
 def _ask(body: dict) -> dict:
     question = str(body.get("question") or "")
+    try:
+        max_cards = int(body.get("max_cards") or 2)
+    except (TypeError, ValueError):
+        max_cards = 2
     ctx = build_context(
         question,
         level=str(body.get("level") or "高中"),
         textbook=str(body.get("textbook") or "人教版"),
-        max_cards=int(body.get("max_cards") or 2),
+        max_cards=max_cards,
         show_citations=bool(body.get("show_citations", True)),
     )
     if ctx.get("refused"):
@@ -71,8 +75,11 @@ def _molar_mass(body: dict) -> dict:
 def _calculate(body: dict) -> dict:
     kind = str(body.get("kind") or "")
     formula = str(body.get("formula") or "")
-    a = float(body.get("a") or 0)
-    b = float(body.get("b") or 0)
+    try:
+        a = float(body.get("a") or 0)
+        b = float(body.get("b") or 0)
+    except (TypeError, ValueError):
+        return {"status": "error", "error": {"code": "BAD_NUMBER", "message": "a/b 必须是数字"}}
     try:
         if kind == "moles_from_mass":
             value = stoich.moles_from_mass(a, formula)
