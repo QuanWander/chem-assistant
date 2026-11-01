@@ -73,7 +73,7 @@ def _split_chunks(text: str) -> list[str]:
     return [c for c in chunks if c.strip()]
 
 
-def search(query: str, k: int = 3, stage: str | None = None, book: str | None = None) -> list[dict]:
+def search(query: str, k: int = 3, stage: str | None = None, book: str | None = None, min_ratio: float = 0.0) -> list[dict]:
     """返回最相关的 k 张卡片（分数为 0 的不返回）。"""
     ranked = []
     for card in cards():
@@ -85,4 +85,7 @@ def search(query: str, k: int = 3, stage: str | None = None, book: str | None = 
         if score > 0:
             ranked.append((score, card))
     ranked.sort(key=lambda item: (-item[0], item[1].get("id", "")))
+    if ranked and min_ratio > 0:
+        best = ranked[0][0]
+        ranked = [item for item in ranked if item[0] >= best * min_ratio]
     return [card for _, card in ranked[:k]]

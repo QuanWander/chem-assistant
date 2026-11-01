@@ -18,7 +18,7 @@ from chemcore.policy import (
     unknown_answer,
 )
 from chemcore.retrieval import cards, search
-from chemcore.service import build_context, strict_rules
+from chemcore.service import build_context, looks_like_chemistry, strict_rules
 
 
 class SafetyTest(unittest.TestCase):
@@ -79,6 +79,24 @@ class RetrievalTest(unittest.TestCase):
 
     def test_no_match(self):
         self.assertEqual(search("完全无关的字符串 xyzzy"), [])
+
+
+class DetectTest(unittest.TestCase):
+    def test_formula_question(self):
+        self.assertTrue(looks_like_chemistry("H2 + O2 生成什么"))
+        self.assertTrue(looks_like_chemistry("Fe2O3 是什么颜色"))
+        self.assertTrue(looks_like_chemistry("Ca(OH)2 和 CO2 反应"))
+
+    def test_non_chemistry(self):
+        self.assertFalse(looks_like_chemistry("今天天气怎么样"))
+        self.assertFalse(looks_like_chemistry("OK 收到"))
+        self.assertFalse(looks_like_chemistry("AI 真好用"))
+
+    def test_retrieval_threshold(self):
+        from chemcore.retrieval import search
+
+        hits = search("氧化还原反应的实质是什么", k=2, min_ratio=0.5)
+        self.assertEqual([c["id"] for c in hits], ["redox"])
 
 
 class StrictModeTest(unittest.TestCase):

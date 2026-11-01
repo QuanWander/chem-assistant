@@ -8,7 +8,10 @@
 
 from __future__ import annotations
 
+import re
+
 from .answer import ChemAnswer, Citation
+from .facts import elements as _elements
 from .policy import check_safety, grade_from_book, lab_safety_note
 from .retrieval import search
 
@@ -20,9 +23,32 @@ CHEM_KEYWORDS = [
 ]
 
 
+def _formula_tokens(text: str) -> list[str]:
+    """粗筛可能是化学式的片段：H2O、Fe2O3、H2、O2……"""
+    table = _elements()
+    found: list[str] = []
+    for match in re.finditer(r"(?:[A-Z][a-z]?\d*)+", text or ""):
+        token = match.group(0)
+        symbols = re.findall(r"[A-Z][a-z]?", token)
+        if symbols and all(sym in table for sym in symbols):
+            found.append(token)
+    return found
+
+
 def looks_like_chemistry(text: str) -> bool:
     body = text or ""
-    return any(word in body for word in CHEM_KEYWORDS)
+    if any(word in body for word in CHEM_KEYWORDS):
+        return True
+    if re.search(r"(->|→|⇌)", body):
+        return True
+    tokens = _formula_tokens(body)
+    if len(tokens) >= 2:
+        return True
+    for token in tokens:
+        symbols = set(re.findall(r"[A-Z][a-z]?", token))
+        if len(symbols) >= 2 and any(ch.isdigit() for ch in token):
+            return True
+    return False
 
 
 def card_to_text(card: dict, *, show_citations: bool = True) -> str:
@@ -90,7 +116,7 @@ def build_context(
             "safety_note": "",
         }
 
-    hits = search(question, k=max_cards)
+    hits = search(question, k=max_cards, min_ratio=0.5)
     return {
         "refused": False,
         "rules": strict_rules(level, textbook, strict=strict),

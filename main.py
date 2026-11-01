@@ -44,7 +44,7 @@ except ImportError:  # 直接跑 main.py / 冒烟测试时没有包上下文
     "astrbot_plugin_chem_assistant",
     "大肥鱼",
     "化学助教：初三/高中，人教版，会算、会查、不确定会直说",
-    "0.1.7",
+    "0.1.8",
 )
 class ChemAssistant(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None) -> None:

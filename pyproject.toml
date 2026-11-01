@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chem-assistant"
-version = "0.1.7"
+version = "0.1.8"
 description = "面向初三与高中的化学助教核心：化学式、配平、计量、人教版知识卡与严谨策略"
 readme = "README.md"
 requires-python = ">=3.10"
