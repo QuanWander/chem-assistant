@@ -35,7 +35,7 @@ from chemcore.service import build_context, card_to_text, looks_like_chemistry
     "astrbot_plugin_chem_assistant",
     "大肥鱼",
     "化学助教：初三/高中，人教版，会算、会查、不确定会直说",
-    "0.1.3",
+    "0.1.4",
 )
 class ChemAssistant(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None) -> None:
