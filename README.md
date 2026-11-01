@@ -85,6 +85,14 @@ python tests/smoke_adapter.py                # 适配器冒烟（需装 AstrBot 
 
 当前 77 个核心用例 + 12 个适配器冒烟 + 57 项 golden set，覆盖解析、配平、计量、pH、安全、检索、回答结构。
 
+
+### pip 安装（核心库 / 其他适配器）
+
+```bash
+pip install https://github.com/QuanWander/chem-assistant/releases/download/v0.1.5/chem_assistant-0.1.5-py3-none-any.whl
+```
+
+装完可以直接 `from chemcore import balance_equation, parse_formula, acidbase`，也可以跑 `python -m adapters.mcp.server`、`python -m adapters.http.server`。
 ## 其他平台怎么接
 
 ### HTTP（QQ 桥接 / QQAgent / 其他语言）
