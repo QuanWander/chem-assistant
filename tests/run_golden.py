@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from chemcore import ChemError, balance_equation, parse_formula
+from chemcore import ChemError, acidbase, balance_equation, parse_formula
 from chemcore.policy import check_safety
 from chemcore.retrieval import search
 
@@ -47,6 +47,22 @@ def main() -> int:
 
     for question in GOLDEN["safety_allow"]:
         check(f"allow: {question}", not check_safety(question).refused)
+
+    for kind, c, k, expected in GOLDEN.get("ph", []):
+        try:
+            if kind == "strong_acid":
+                r = acidbase.ph_strong_acid(c)
+            elif kind == "strong_base":
+                r = acidbase.ph_strong_base(c)
+            elif kind == "weak_acid":
+                r = acidbase.ph_weak_acid(c, k)
+            else:
+                r = acidbase.ph_weak_base(c, k)
+            actual = r.ph
+        except ChemError as exc:
+            check(f"ph: {kind}", False, str(exc))
+            continue
+        check(f"ph: {kind} {c}", abs(actual - expected) < 0.01, f"got {actual}")
 
     for question, card_id in GOLDEN["retrieval"]:
         hits = search(question, k=1)

@@ -63,6 +63,7 @@ git clone https://github.com/QuanWander/chem-assistant
 | `chem_balance` | 配平方程式，校验原子/电荷守恒 |
 | `chem_molar_mass` | 计算摩尔质量 |
 | `chem_calculate` | 物质的量、气体体积、浓度等计算 |
+| `chem_ph` | 强酸/强碱/一元弱酸/一元弱碱的 pH（弱酸必须给 Ka） |
 | `chem_search` | 检索人教版知识卡 |
 | `chem_safety_check` | 判断是否涉及危险操作，给实验安全提示 |
 
@@ -77,12 +78,12 @@ git clone https://github.com/QuanWander/chem-assistant
 ## 测试
 
 ```bash
-python -m unittest discover -s tests -v      # 核心 70 个用例
-python tests/run_golden.py                   # 确定性 golden set 47 项
+python -m unittest discover -s tests -v      # 核心 77 个用例
+python tests/run_golden.py                   # 确定性 golden set 57 项
 python tests/smoke_adapter.py                # 适配器冒烟（需装 AstrBot 依赖）
 ```
 
-当前 70 个核心用例 + 8 个适配器冒烟 + 53 项 golden set，覆盖解析、配平、计量、安全、检索、回答结构。
+当前 77 个核心用例 + 12 个适配器冒烟 + 57 项 golden set，覆盖解析、配平、计量、pH、安全、检索、回答结构。
 
 ## 其他平台怎么接
 
@@ -107,7 +108,7 @@ POST /v1/safety       {"question": "..."}
 python -m adapters.mcp.server
 ```
 
-暴露 5 个工具：`chem_search`、`chem_balance`、`chem_molar_mass`、`chem_calculate`、`chem_safety_check`。
+暴露 6 个工具：`chem_search`、`chem_balance`、`chem_molar_mass`、`chem_calculate`、`chem_ph`、`chem_safety_check`。
 在 MCP 客户端里把命令配成 `python -m adapters.mcp.server`（工作目录为本仓库）即可。
 
 ### CLI

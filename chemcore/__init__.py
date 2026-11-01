@@ -9,7 +9,7 @@
 from .errors import ChemError
 from .formula import Composition, parse_formula
 from .equation import BalanceResult, balance_equation, check_ion_equation
-from . import stoich
+from . import acidbase, stoich
 
 __all__ = [
     "ChemError",
@@ -19,6 +19,7 @@ __all__ = [
     "balance_equation",
     "check_ion_equation",
     "stoich",
+    "acidbase",
 ]
 
 __version__ = "0.1.0"

@@ -8,7 +8,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from chemcore import ChemError, balance_equation, parse_formula, stoich
+from chemcore import ChemError, acidbase, balance_equation, parse_formula, stoich
 from chemcore.facts import activity_order, gas_test, ion_color, solubility_rules
 from chemcore.knowledge import all_chapters, find_chapter
 
@@ -125,6 +125,27 @@ class StoichTest(unittest.TestCase):
     def test_negative_rejected(self):
         with self.assertRaises(ChemError):
             stoich.moles_from_mass(-1, "H2O")
+
+
+class AcidBaseTest(unittest.TestCase):
+    def test_strong_acid(self):
+        self.assertAlmostEqual(acidbase.ph_strong_acid(0.1).ph, 1.0, places=6)
+
+    def test_strong_base(self):
+        self.assertAlmostEqual(acidbase.ph_strong_base(0.1).ph, 13.0, places=6)
+
+    def test_weak_acid(self):
+        r = acidbase.ph_weak_acid(0.1, 1.8e-5)
+        self.assertAlmostEqual(r.ph, 2.875, places=2)
+        self.assertIn("c/Ka", "".join(r.assumptions))
+
+    def test_weak_base(self):
+        r = acidbase.ph_weak_base(0.1, 1.8e-5)
+        self.assertAlmostEqual(r.ph, 11.125, places=2)
+
+    def test_missing_ka(self):
+        with self.assertRaises(ChemError):
+            acidbase.ph_weak_acid(0.1, 0)
 
 
 class FactsTest(unittest.TestCase):

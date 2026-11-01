@@ -50,6 +50,10 @@ async def main():
     check("calculate", "mol" in out and "0.999" in out, out)
     print("   ", out)
 
+    out = await p.chem_ph(None, "weak_acid", 0.1, 1.8e-5)
+    check("ph_weak_acid", "2.8" in out, out)
+    print("   ", out)
+
     out = await p.chem_search(None, "氧化还原的实质")
     check("search", "氧化" in out and "必修第一册" in out, out)
 

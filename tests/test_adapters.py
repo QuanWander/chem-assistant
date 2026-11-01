@@ -44,6 +44,15 @@ class HttpTest(unittest.TestCase):
         self.assertEqual(data["status"], "error")
         self.assertEqual(data["error"]["code"], "BAD_NUMBER")
 
+    def test_ph(self):
+        data = http_server._ph({"kind": "weak_acid", "c": 0.1, "ka": 1.8e-5})
+        self.assertEqual(data["status"], "ok")
+        self.assertAlmostEqual(data["ph"], 2.875, places=2)
+
+    def test_ph_bad_kind(self):
+        data = http_server._ph({"kind": "nope", "c": 0.1})
+        self.assertEqual(data["status"], "error")
+
     def test_safety(self):
         self.assertTrue(http_server._safety({"question": "怎么制作炸药"})["refused"])
         self.assertFalse(http_server._safety({"question": "电解水实验"})["refused"])
@@ -72,7 +81,7 @@ class McpTest(unittest.TestCase):
     def test_tools_list(self):
         resp = mcp_server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         names = [t["name"] for t in resp["result"]["tools"]]
-        self.assertEqual(len(names), 5)
+        self.assertEqual(len(names), 6)
         self.assertIn("chem_balance", names)
 
     def test_tools_call_balance(self):

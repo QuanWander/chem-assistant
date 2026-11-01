@@ -21,7 +21,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from chemcore import ChemError, balance_equation, parse_formula, stoich
+from chemcore import ChemError, acidbase, balance_equation, parse_formula, stoich
 from chemcore.policy import check_safety, lab_safety_note
 from chemcore.service import build_context
 
@@ -101,6 +101,30 @@ def _calculate(body: dict) -> dict:
     return {"status": "ok", "kind": kind, "value": round(value, 6)}
 
 
+def _ph(body: dict) -> dict:
+    kind = str(body.get("kind") or "")
+    try:
+        c = float(body.get("c") or 0)
+        ka = float(body.get("ka") or 0)
+        kb = float(body.get("kb") or 0)
+    except (TypeError, ValueError):
+        return {"status": "error", "error": {"code": "BAD_NUMBER", "message": "c/ka/kb 必须是数字"}}
+    try:
+        if kind == "strong_acid":
+            r = acidbase.ph_strong_acid(c)
+        elif kind == "strong_base":
+            r = acidbase.ph_strong_base(c)
+        elif kind == "weak_acid":
+            r = acidbase.ph_weak_acid(c, ka)
+        elif kind == "weak_base":
+            r = acidbase.ph_weak_base(c, kb)
+        else:
+            return {"status": "error", "error": {"code": "BAD_KIND", "message": f"不支持的 pH 类型：{kind}"}}
+    except ChemError as exc:
+        return {"status": "error", "error": exc.to_dict()}
+    return {"status": "ok", **r.to_dict()}
+
+
 def _safety(body: dict) -> dict:
     question = str(body.get("question") or "")
     verdict = check_safety(question)
@@ -119,6 +143,7 @@ ROUTES = {
     "/v1/molar_mass": _molar_mass,
     "/v1/calculate": _calculate,
     "/v1/safety": _safety,
+    "/v1/ph": _ph,
 }
 
 

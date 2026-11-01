@@ -25,7 +25,7 @@ try:
 except Exception:  # pragma: no cover - 老版本兜底
     TextPart = None  # type: ignore[assignment]
 
-from chemcore import ChemError, balance_equation, parse_formula, stoich
+from chemcore import ChemError, acidbase, balance_equation, parse_formula, stoich
 from chemcore.policy import check_safety, lab_safety_note
 from chemcore.retrieval import search
 from chemcore.service import build_context, card_to_text, looks_like_chemistry
@@ -35,7 +35,7 @@ from chemcore.service import build_context, card_to_text, looks_like_chemistry
     "astrbot_plugin_chem_assistant",
     "大肥鱼",
     "化学助教：初三/高中，人教版，会算、会查、不确定会直说",
-    "0.1.4",
+    "0.1.5",
 )
 class ChemAssistant(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None) -> None:
@@ -217,6 +217,43 @@ class ChemAssistant(Star):
             return f"不支持的计算类型：{kind}"
         except ChemError as exc:
             return f"计算失败：{exc.message}。{exc.hint}"
+
+    @filter.llm_tool()
+    async def chem_ph(
+        self,
+        event: AstrMessageEvent,
+        kind: str,
+        c: float,
+        ka: float = 0,
+        kb: float = 0,
+    ):
+        """计算 25 ℃ 溶液的 pH。kind 取值：strong_acid / strong_base / weak_acid / weak_base；弱酸必须给 Ka，弱碱必须给 Kb。
+
+        Args:
+            kind(string): 溶液类型。
+            c(float): 浓度，mol/L。
+            ka(float): 一元弱酸的 Ka；weak_acid 必填。
+            kb(float): 一元弱碱的 Kb；weak_base 必填。
+        """
+        try:
+            if kind == "strong_acid":
+                r = acidbase.ph_strong_acid(c)
+            elif kind == "strong_base":
+                r = acidbase.ph_strong_base(c)
+            elif kind == "weak_acid":
+                if ka <= 0:
+                    return "计算失败：弱酸必须提供 Ka（题目没给就不能算，不能替它假设）。"
+                r = acidbase.ph_weak_acid(c, ka)
+            elif kind == "weak_base":
+                if kb <= 0:
+                    return "计算失败：弱碱必须提供 Kb（题目没给就不能算，不能替它假设）。"
+                r = acidbase.ph_weak_base(c, kb)
+            else:
+                return f"不支持的 pH 类型：{kind}"
+        except ChemError as exc:
+            return f"计算失败：{exc.message}。{exc.hint}"
+        notes = "；".join(r.assumptions)
+        return f"pH = {r.ph:.2f}（[H+] = {r.h_concentration:.3e} mol/L；{notes}）"
 
     @filter.llm_tool()
     async def chem_safety_check(self, event: AstrMessageEvent, question: str):

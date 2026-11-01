@@ -13,7 +13,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from chemcore import ChemError, balance_equation, parse_formula, stoich
+from chemcore import ChemError, acidbase, balance_equation, parse_formula, stoich
 from chemcore.policy import check_safety, lab_safety_note
 from chemcore.retrieval import search
 from chemcore.service import build_context, card_to_text
@@ -68,6 +68,20 @@ TOOLS = [
         },
     },
     {
+        "name": "chem_ph",
+        "description": "计算 25 ℃ 稀溶液的 pH（strong_acid / strong_base / weak_acid / weak_base；弱酸给 Ka，弱碱给 Kb）。",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "kind": {"type": "string"},
+                "c": {"type": "number"},
+                "ka": {"type": "number"},
+                "kb": {"type": "number"},
+            },
+            "required": ["kind", "c"],
+        },
+    },
+    {
         "name": "chem_safety_check",
         "description": "判断问题是否涉及危险化学品操作，返回是否拒答与实验安全提示。",
         "inputSchema": {
@@ -112,6 +126,22 @@ def call_tool(name: str, args: dict) -> dict:
             if kind not in table:
                 return _text_result(f"不支持的计算类型：{kind}", is_error=True)
             return _text_result(f"{kind} = {table[kind]():.6f}")
+        if name == "chem_ph":
+            kind = str(args.get("kind") or "")
+            c = float(args.get("c") or 0)
+            ka = float(args.get("ka") or 0)
+            kb = float(args.get("kb") or 0)
+            if kind == "strong_acid":
+                r = acidbase.ph_strong_acid(c)
+            elif kind == "strong_base":
+                r = acidbase.ph_strong_base(c)
+            elif kind == "weak_acid":
+                r = acidbase.ph_weak_acid(c, ka)
+            elif kind == "weak_base":
+                r = acidbase.ph_weak_base(c, kb)
+            else:
+                return _text_result(f"不支持的 pH 类型：{kind}", is_error=True)
+            return _text_result(f"pH = {r.ph:.2f}（{'; '.join(r.assumptions)}）")
         if name == "chem_safety_check":
             question = str(args.get("question") or "")
             verdict = check_safety(question)
