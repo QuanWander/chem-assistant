@@ -44,8 +44,18 @@ def card_to_text(card: dict, *, show_citations: bool = True) -> str:
     return "\n".join(lines)
 
 
-def strict_rules(level: str, textbook: str) -> str:
+def strict_rules(level: str, textbook: str, strict: bool = True) -> str:
     grade = level or "高中"
+    if not strict:
+        return (
+            "【化学助教规则（教学引导模式）】\n"
+            f"1. 面向{grade}，教材版本：{textbook}。\n"
+            "2. 计算类问题建议调用工具核对；如果没调工具，最终答案必须自己再查一遍。\n"
+            "3. 引用教材要给到书名和章节，不能伪造页码或原文。\n"
+            "4. 可以用提问的方式引导学生自己得出答案；但涉及事实和计算，仍然不能含糊。\n"
+            "5. 题目条件不足或前提错误时，先指出来。\n"
+            "6. 不给危险化学品的制作、提纯或使用方法；实验安全第一。"
+        )
     return (
         "【化学助教规则】\n"
         f"1. 面向{grade}，教材版本：{textbook}。\n"
@@ -66,6 +76,7 @@ def build_context(
     textbook: str = "人教版",
     max_cards: int = 2,
     show_citations: bool = True,
+    strict: bool = True,
 ) -> dict:
     """返回 {refused, safety_note, rules, cards, hits}。"""
     verdict = check_safety(question)
@@ -82,7 +93,7 @@ def build_context(
     hits = search(question, k=max_cards)
     return {
         "refused": False,
-        "rules": strict_rules(level, textbook),
+        "rules": strict_rules(level, textbook, strict=strict),
         "cards": [card_to_text(c, show_citations=show_citations) for c in hits],
         "hits": hits,
         "safety_note": lab_safety_note(question),

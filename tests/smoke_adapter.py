@@ -62,6 +62,10 @@ async def main():
     out = await p.chem_molar_mass(None, "Xx2O")
     check("formula_error", "失败" in out, out)
 
+    check("level_default", p._effective_level("氧化还原") == "高中", p._effective_level("氧化还原"))
+    check("level_junior", p._effective_level("初三的化学题") == "初三", p._effective_level("初三的化学题"))
+    check("level_senior", p._effective_level("高考化学") == "高中", p._effective_level("高考化学"))
+
     # 注入：用假 req 验证内容块
     class Req:
         prompt = "氧化还原反应的实质是什么"

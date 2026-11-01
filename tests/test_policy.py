@@ -18,6 +18,7 @@ from chemcore.policy import (
     unknown_answer,
 )
 from chemcore.retrieval import cards, search
+from chemcore.service import build_context, strict_rules
 
 
 class SafetyTest(unittest.TestCase):
@@ -78,6 +79,21 @@ class RetrievalTest(unittest.TestCase):
 
     def test_no_match(self):
         self.assertEqual(search("完全无关的字符串 xyzzy"), [])
+
+
+class StrictModeTest(unittest.TestCase):
+    def test_strict_rules(self):
+        strict = strict_rules("高中", "人教版", strict=True)
+        guide = strict_rules("高中", "人教版", strict=False)
+        self.assertIn("必须先调用工具", strict)
+        self.assertNotIn("必须先调用工具", guide)
+        self.assertIn("教学引导模式", guide)
+
+    def test_build_context_flag(self):
+        strict_ctx = build_context("氧化还原", strict=True)
+        guide_ctx = build_context("氧化还原", strict=False)
+        self.assertIn("必须先调用工具", strict_ctx["rules"])
+        self.assertIn("教学引导模式", guide_ctx["rules"])
 
 
 class AnswerTest(unittest.TestCase):

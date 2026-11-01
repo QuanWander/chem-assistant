@@ -35,7 +35,7 @@ from chemcore.service import build_context, card_to_text, looks_like_chemistry
     "astrbot_plugin_chem_assistant",
     "大肥鱼",
     "化学助教：初三/高中，人教版，会算、会查、不确定会直说",
-    "0.1.2",
+    "0.1.3",
 )
 class ChemAssistant(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None) -> None:
@@ -54,6 +54,18 @@ class ChemAssistant(Star):
             return max(0, min(5, int(self.config.get("max_cards", 2))))
         except (TypeError, ValueError):
             return 2
+
+    def _strict(self) -> bool:
+        return bool(self.config.get("strict_mode", True))
+
+    def _effective_level(self, question: str) -> str:
+        """问题里明确说了「初三/初中」就按初中答，说了「高考/选必」就按高中答。"""
+        text = question or ""
+        if any(word in text for word in ("初三", "初中", "中考", "九年级")):
+            return "初三"
+        if any(word in text for word in ("高三", "高考", "选修", "选择性必修")):
+            return "高中"
+        return self._level()
 
     # ------------------------------------------------------------------ 注入
     @staticmethod
@@ -85,10 +97,11 @@ class ChemAssistant(Star):
 
         ctx = build_context(
             question,
-            level=self._level(),
+            level=self._effective_level(question),
             textbook=self._textbook(),
             max_cards=self._max_cards(),
             show_citations=bool(self.config.get("show_citations", True)),
+            strict=self._strict(),
         )
         if ctx.get("refused"):
             return
