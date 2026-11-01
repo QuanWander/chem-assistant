@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chem-assistant"
+version = "0.1.0"
+description = "面向初三与高中的化学助教核心：化学式、配平、计量、人教版知识卡与严谨策略"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "大肥鱼" }]
+keywords = ["chemistry", "education", "astrbot", "mcp"]
+
+[project.urls]
+Homepage = "https://github.com/QuanWander/chem-assistant"
+
+[project.scripts]
+chem = "adapters.cli:main"
+
+[tool.setuptools]
+packages = ["chemcore", "chemcore.facts", "chemcore.knowledge", "adapters", "adapters.http", "adapters.mcp"]
+
+[tool.setuptools.package-data]
+chemcore = ["facts/*.json", "knowledge/*.json", "knowledge/cards/*.json"]

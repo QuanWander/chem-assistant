@@ -1,0 +1,219 @@
+"""AstrBot 适配器：化学助教。
+
+薄壳原则：解析、配平、计量、知识检索全部在 chemcore，这里只做：
+1. 危险请求的确定性拦截；
+2. 往 LLM 请求里注入「严谨规则 + 相关知识卡」；
+3. 把 chemcore 暴露成 LLM 工具。
+
+AstrBot 版本要求 >= 4.24.2（需要 TextPart.mark_as_temp）。
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from astrbot.api import AstrBotConfig, logger
+from astrbot.api.event import AstrMessageEvent, filter
+from astrbot.api.provider import ProviderRequest
+from astrbot.api.star import Context, Star, register
+
+try:
+    from astrbot.core.agent.message import TextPart
+except Exception:  # pragma: no cover - 老版本兜底
+    TextPart = None  # type: ignore[assignment]
+
+from chemcore import ChemError, balance_equation, parse_formula, stoich
+from chemcore.policy import check_safety, lab_safety_note
+from chemcore.retrieval import search
+from chemcore.service import build_context, card_to_text, looks_like_chemistry
+
+
+@register(
+    "astrbot_plugin_chem_assistant",
+    "大肥鱼",
+    "化学助教：初三/高中，人教版，会算、会查、不确定会直说",
+    "0.1.0",
+)
+class ChemAssistant(Star):
+    def __init__(self, context: Context, config: AstrBotConfig | None = None) -> None:
+        super().__init__(context)
+        self.config = config or {}
+
+    # ------------------------------------------------------------------ 配置
+    def _level(self) -> str:
+        return str(self.config.get("level") or "高中").strip()
+
+    def _textbook(self) -> str:
+        return str(self.config.get("textbook") or "人教版").strip()
+
+    def _max_cards(self) -> int:
+        try:
+            return max(0, min(5, int(self.config.get("max_cards", 2))))
+        except (TypeError, ValueError):
+            return 2
+
+    # ------------------------------------------------------------------ 注入
+    @staticmethod
+    def _append_part(req: ProviderRequest, text: str) -> bool:
+        if not text.strip() or TextPart is None:
+            return False
+        try:
+            part = TextPart(text=text)
+            mark = getattr(part, "mark_as_temp", None)
+            if not callable(mark):
+                logger.warning("[chem] 当前 AstrBot 不支持 mark_as_temp，跳过注入")
+                return False
+            part = mark()
+            req.extra_user_content_parts.append(part)
+            return True
+        except Exception as exc:  # pragma: no cover - 防御
+            logger.warning(f"[chem] 追加内容块失败: {exc}")
+            return False
+
+    @filter.on_llm_request()
+    async def inject_chemistry_context(
+        self, event: AstrMessageEvent, req: ProviderRequest
+    ) -> None:
+        if not bool(self.config.get("enabled", True)):
+            return
+        question = str(req.prompt or "")
+        if not looks_like_chemistry(question):
+            return
+
+        ctx = build_context(
+            question,
+            level=self._level(),
+            textbook=self._textbook(),
+            max_cards=self._max_cards(),
+            show_citations=bool(self.config.get("show_citations", True)),
+        )
+        if ctx.get("refused"):
+            return
+
+        blocks = [ctx["rules"]]
+        cards = ctx.get("cards") or []
+        if cards:
+            blocks.append("【相关知识卡片（来自内置知识库，可直接引用章节）】")
+            blocks.extend(cards)
+        else:
+            blocks.append("【提示】知识库里没有直接匹配的卡片；如果回答涉及具体章节，请明确说「教材未提供依据」。")
+        if ctx.get("safety_note"):
+            blocks.append(f"【实验安全】{ctx['safety_note']}")
+
+        if self._append_part(req, "\n\n".join(blocks)):
+            logger.info("[chem] 注入 %d 张知识卡（%s）", len(cards), self._level())
+
+    # ------------------------------------------------------------------ 拦截
+    @filter.event_message_type(filter.EventMessageType.ALL, priority=100)
+    async def refuse_dangerous(self, event: AstrMessageEvent):
+        """危险化学品请求直接拒答，不交给模型。"""
+        if not bool(self.config.get("enabled", True)):
+            return
+        verdict = check_safety(event.message_str or "")
+        if not verdict.refused:
+            return
+        event.stop_event()
+        logger.info("[chem] 拦截危险请求：%s", verdict.category)
+        yield event.plain_result(
+            f"{verdict.message}\n{verdict.hint}\n\n安全提示：涉及危险化学品时，请以实验室安全规范和专业教师指导为准。"
+        )
+
+    # ------------------------------------------------------------------ 工具
+    @filter.llm_tool()
+    async def chem_search(self, event: AstrMessageEvent, question: str, level: str = ""):
+        """检索人教版化学知识卡片，返回概念、要点、方程式与易错点。
+
+        Args:
+            question(string): 要查的化学问题或关键词，例如「氧化还原的实质」。
+            level(string): 学段，初三 / 高中；留空用插件配置。
+        """
+        hits = search(question, k=self._max_cards(), stage=None)
+        if not hits:
+            return "内置知识库里没有匹配的卡片。不要编造章节；如果回答，请说明依据不足。"
+        return "\n\n".join(card_to_text(card) for card in hits)
+
+    @filter.llm_tool()
+    async def chem_molar_mass(self, event: AstrMessageEvent, formula: str):
+        """计算化学式的摩尔质量（g/mol），支持括号、结晶水和电荷。
+
+        Args:
+            formula(string): 化学式，例如 H2SO4、Ca(OH)2、CuSO4·5H2O、SO4^2-。
+        """
+        try:
+            comp = parse_formula(formula)
+        except ChemError as exc:
+            return f"计算失败：{exc.message}。{exc.hint}"
+        return f"{formula} 的摩尔质量 = {comp.molar_mass():.3f} g/mol（原子数 {comp.atoms()}，电荷 {comp.charge:+d}）。"
+
+    @filter.llm_tool()
+    async def chem_balance(self, event: AstrMessageEvent, equation: str):
+        """配平化学方程式，返回最小整数系数并校验原子/电荷守恒。
+
+        Args:
+            equation(string): 未配平的方程式，用 -> 或 → 连接，例如「Fe + O2 -> Fe3O4」。
+        """
+        try:
+            result = balance_equation(equation)
+        except ChemError as exc:
+            return f"配平失败：{exc.message}。{exc.hint}"
+        checks = result.checks
+        note = "原子守恒" if checks.get("balanced") else "原子不守恒"
+        if checks.get("charge_balanced") is False:
+            note += "，电荷不守恒"
+        return f"配平结果：{result.formatted()}（{note}）"
+
+    @filter.llm_tool()
+    async def chem_calculate(
+        self,
+        event: AstrMessageEvent,
+        kind: str,
+        formula: str = "",
+        a: float = 0,
+        b: float = 0,
+    ):
+        """化学计量计算。kind 取值：moles_from_mass / mass_from_moles / gas_volume_stp / moles_from_gas_volume_stp / concentration / moles_from_concentration。
+
+        Args:
+            kind(string): 计算类型。
+            formula(string): 化学式，涉及质量/摩尔质量时必填。
+            a(float): 第一个输入量（质量 g、物质的量 mol、体积 L、浓度 mol/L）。
+            b(float): 第二个输入量（溶液体积 L 等）。
+        """
+        try:
+            if kind == "moles_from_mass":
+                value = stoich.moles_from_mass(a, formula)
+                return f"n = {value:.4f} mol（{a} g ÷ {stoich.molar_mass(formula):.3f} g/mol）"
+            if kind == "mass_from_moles":
+                value = stoich.mass_from_moles(a, formula)
+                return f"m = {value:.4f} g（{a} mol × {stoich.molar_mass(formula):.3f} g/mol）"
+            if kind == "gas_volume_stp":
+                value = stoich.gas_volume_stp(a)
+                return f"V = {value:.4f} L（{a} mol × 22.4 L/mol，标准状况）"
+            if kind == "moles_from_gas_volume_stp":
+                value = stoich.moles_from_gas_volume_stp(a)
+                return f"n = {value:.4f} mol（{a} L ÷ 22.4 L/mol，标准状况）"
+            if kind == "concentration":
+                value = stoich.concentration(a, b)
+                return f"c = {value:.4f} mol/L（{a} mol ÷ {b} L）"
+            if kind == "moles_from_concentration":
+                value = stoich.moles_from_concentration(a, b)
+                return f"n = {value:.4f} mol（{a} mol/L × {b} L）"
+            return f"不支持的计算类型：{kind}"
+        except ChemError as exc:
+            return f"计算失败：{exc.message}。{exc.hint}"
+
+    @filter.llm_tool()
+    async def chem_safety_check(self, event: AstrMessageEvent, question: str):
+        """判断一个问题是否涉及危险化学品操作，并给出实验安全提示。
+
+        Args:
+            question(string): 用户的问题或实验描述。
+        """
+        verdict = check_safety(question)
+        if verdict.refused:
+            return f"必须拒绝：{verdict.message}。{verdict.hint}"
+        note = lab_safety_note(question)
+        return f"可以回答。{('实验安全：' + note) if note else '未识别到特别危险的实验操作。'}"

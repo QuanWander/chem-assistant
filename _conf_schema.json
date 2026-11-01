@@ -1,0 +1,43 @@
+{
+  "enabled": {
+    "description": "启用化学助教",
+    "type": "bool",
+    "hint": "关闭后不注入上下文、不拦截危险请求，工具仍可被显式调用。",
+    "default": true
+  },
+  "level": {
+    "description": "默认学段",
+    "type": "string",
+    "hint": "回答深度按这个学段来；可填「初三」或「高中」。",
+    "default": "高中"
+  },
+  "textbook": {
+    "description": "教材版本",
+    "type": "string",
+    "hint": "v1 只内置人教版；填其他版本时知识卡仍按人教版，回答会提示版本差异。",
+    "default": "人教版"
+  },
+  "strict_mode": {
+    "description": "严格模式",
+    "type": "bool",
+    "hint": "开启后要求模型必须调工具、必须给依据、不确定必须说不知道。",
+    "default": true
+  },
+  "show_citations": {
+    "description": "显示教材依据",
+    "type": "bool",
+    "hint": "在知识卡里附上书名和章节。",
+    "default": true
+  },
+  "max_cards": {
+    "description": "每轮最多注入几张知识卡",
+    "type": "int",
+    "hint": "建议 1–3；太多会挤占上下文。",
+    "default": 2
+  },
+  "debug_enable": {
+    "description": "调试日志",
+    "type": "bool",
+    "default": false
+  }
+}

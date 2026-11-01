@@ -1,0 +1,68 @@
+{
+  "note": "教学用常见事实表。数据以人教版教材与通行中学结论为准，不替代实验数据。",
+  "solubility": {
+    "rules": [
+      "钾盐、钠盐、铵盐、硝酸盐都可溶。",
+      "盐酸盐：除 AgCl、PbCl2（微溶）外一般可溶。",
+      "硫酸盐：除 BaSO4、PbSO4 难溶，CaSO4、Ag2SO4 微溶外一般可溶。",
+      "碳酸盐、磷酸盐：除 K+、Na+、NH4+ 外一般难溶。",
+      "氢氧化物：除 KOH、NaOH、Ba(OH)2 可溶，Ca(OH)2 微溶外一般难溶。",
+      "AgCl、BaSO4 不溶于稀硝酸，常用于检验 Cl-、SO4^2-。"
+    ],
+    "insoluble_examples": ["AgCl", "BaSO4", "CaCO3", "BaCO3", "Cu(OH)2", "Fe(OH)3", "Al(OH)3", "Mg(OH)2"],
+    "slightly_soluble": ["Ca(OH)2", "CaSO4", "Ag2SO4", "PbCl2", "MgCO3"]
+  },
+  "activity_series": {
+    "order": ["K", "Ca", "Na", "Mg", "Al", "Zn", "Fe", "Sn", "Pb", "H", "Cu", "Hg", "Ag", "Pt", "Au"],
+    "note": "排在 H 前的金属能与稀盐酸/稀硫酸反应放出氢气；排在前面的金属能把后面的金属从其盐溶液中置换出来（K、Ca、Na 先与水反应，不用于置换盐溶液）。"
+  },
+  "ion_colors": {
+    "Cu2+": "蓝色",
+    "Fe2+": "浅绿色",
+    "Fe3+": "黄色（棕黄）",
+    "MnO4-": "紫红色",
+    "Cr2O7^2-": "橙色",
+    "Cr3+": "绿色",
+    "Co2+": "粉红色",
+    "Ni2+": "绿色",
+    "Cu(OH)2": "蓝色沉淀",
+    "Fe(OH)3": "红褐色沉淀",
+    "Fe(OH)2": "白色沉淀，迅速变灰绿、最终红褐",
+    "Mg(OH)2": "白色沉淀",
+    "Al(OH)3": "白色沉淀",
+    "AgCl": "白色沉淀",
+    "BaSO4": "白色沉淀",
+    "CaCO3": "白色沉淀"
+  },
+  "gas_tests": {
+    "O2": {"method": "带火星的木条伸入集气瓶", "phenomenon": "木条复燃"},
+    "H2": {"method": "点燃，在火焰上方罩干冷烧杯", "phenomenon": "淡蓝色火焰，烧杯内壁出现水雾"},
+    "CO2": {"method": "通入澄清石灰水", "phenomenon": "石灰水变浑浊"},
+    "CO": {"method": "点燃后检验产物", "phenomenon": "蓝色火焰，生成能使石灰水变浑浊的气体"},
+    "CH4": {"method": "点燃，检验产物", "phenomenon": "淡蓝色火焰，生成水和二氧化碳"},
+    "NH3": {"method": "湿润的红色石蕊试纸", "phenomenon": "试纸变蓝"},
+    "Cl2": {"method": "湿润的淀粉碘化钾试纸", "phenomenon": "试纸变蓝"},
+    "SO2": {"method": "品红溶液", "phenomenon": "品红褪色，加热后恢复"}
+  },
+  "flame_colors": {
+    "Na": "黄色",
+    "K": "紫色（透过蓝色钴玻璃观察）",
+    "Ca": "砖红色",
+    "Cu": "绿色",
+    "Ba": "黄绿色",
+    "Li": "紫红色",
+    "Sr": "洋红色"
+  },
+  "constants": {
+    "molar_volume_stp": 22.4,
+    "molar_volume_stp_unit": "L/mol（0 ℃、101 kPa，中学教材常用值；IUPAC 现行标准为 22.7 L/mol）",
+    "avogadro": 6.02e23,
+    "gas_constant": 8.314,
+    "water_ion_product_25c": 1.0e-14
+  },
+  "common_indicators": {
+    "石蕊": {"acid": "红色", "neutral": "紫色", "base": "蓝色"},
+    "酚酞": {"acid": "无色", "neutral": "无色", "base": "红色"},
+    "甲基橙": {"acid": "红色", "neutral": "橙色", "base": "黄色"}
+  }
+}

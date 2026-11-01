@@ -1,0 +1,77 @@
+{
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "chem_balance",
+        "description": "配平化学方程式，校验原子与电荷守恒。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "equation": {"type": "string", "description": "用 -> 或 → 连接的方程式，例如 Fe + O2 -> Fe3O4"}
+          },
+          "required": ["equation"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "chem_molar_mass",
+        "description": "计算化学式的摩尔质量（g/mol），支持括号、结晶水、电荷。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "formula": {"type": "string", "description": "例如 H2SO4、Ca(OH)2、CuSO4·5H2O、SO4^2-"}
+          },
+          "required": ["formula"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "chem_calculate",
+        "description": "化学计量计算。kind 可选：moles_from_mass、mass_from_moles、gas_volume_stp、moles_from_gas_volume_stp、concentration、moles_from_concentration。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "kind": {"type": "string"},
+            "formula": {"type": "string"},
+            "a": {"type": "number"},
+            "b": {"type": "number"}
+          },
+          "required": ["kind"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "chem_search",
+        "description": "检索人教版化学知识卡片，返回概念、要点、方程式与易错点。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "question": {"type": "string"},
+            "level": {"type": "string", "enum": ["初三", "高中"]},
+            "max_cards": {"type": "integer"}
+          },
+          "required": ["question"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "chem_safety_check",
+        "description": "判断问题是否涉及危险化学品操作，返回是否必须拒答与实验安全提示。",
+        "parameters": {
+          "type": "object",
+          "properties": {"question": {"type": "string"}},
+          "required": ["question"]
+        }
+      }
+    }
+  ]
+}
