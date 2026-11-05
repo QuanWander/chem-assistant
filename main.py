@@ -32,19 +32,21 @@ try:
     from .chemcore.policy import check_safety, lab_safety_note
     from .chemcore.retrieval import search
     from .chemcore.service import build_context, card_to_text, looks_like_chemistry
+    from .chemcore.study_mode import is_study_related, should_guard
 except ImportError:  # 直接跑 main.py / 冒烟测试时没有包上下文
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from chemcore import ChemError, acidbase, balance_equation, parse_formula, stoich
     from chemcore.policy import check_safety, lab_safety_note
     from chemcore.retrieval import search
     from chemcore.service import build_context, card_to_text, looks_like_chemistry
+    from chemcore.study_mode import is_study_related, should_guard
 
 
 @register(
     "astrbot_plugin_chem_assistant",
     "大肥鱼",
     "化学助教：初三/高中，人教版，会算、会查、不确定会直说",
-    "0.1.8",
+    "0.1.9",
 )
 class ChemAssistant(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None) -> None:
@@ -66,6 +68,9 @@ class ChemAssistant(Star):
 
     def _strict(self) -> bool:
         return bool(self.config.get("strict_mode", True))
+
+    def _in_study_scope(self, event: AstrMessageEvent) -> bool:
+        return should_guard(self.config, event.get_group_id(), event.get_sender_id())
 
     def _effective_level(self, question: str) -> str:
         """问题里明确说了「初三/初中」就按初中答，说了「高考/选必」就按高中答。"""
@@ -101,7 +106,16 @@ class ChemAssistant(Star):
         if not bool(self.config.get("enabled", True)):
             return
         question = str(req.prompt or "")
+        study_scope = self._in_study_scope(event)
+        mode_block = (
+            "【只聊学习模式】当前群/用户被设置为只聊学习：只回答学习、化学、作业、考试相关问题；"
+            "遇到闲聊、情绪、游戏、八卦，简短拒绝并把话题拉回学习，不展开，不主动闲聊。"
+            if study_scope
+            else ""
+        )
         if not looks_like_chemistry(question):
+            if mode_block and is_study_related(question):
+                self._append_part(req, mode_block)
             return
 
         ctx = build_context(
@@ -115,7 +129,7 @@ class ChemAssistant(Star):
         if ctx.get("refused"):
             return
 
-        blocks = [ctx["rules"]]
+        blocks = ([mode_block] if mode_block else []) + [ctx["rules"]]
         cards = ctx.get("cards") or []
         if cards:
             blocks.append("【相关知识卡片（来自内置知识库，可直接引用章节）】")
@@ -129,6 +143,24 @@ class ChemAssistant(Star):
             logger.info("[chem] 注入 %d 张知识卡（%s）", len(cards), self._level())
 
     # ------------------------------------------------------------------ 拦截
+    @filter.event_message_type(filter.EventMessageType.ALL, priority=120)
+    async def study_only_guard(self, event: AstrMessageEvent):
+        """只聊学习模式：命中的群/用户，非学习话题直接拒答。"""
+        if not bool(self.config.get("enabled", True)):
+            return
+        if not self._in_study_scope(event):
+            return
+        text = str(event.message_str or "").strip()
+        if not text or text.startswith(("/", "／")):
+            return
+        if is_study_related(text):
+            return
+        event.stop_event()
+        logger.info("[chem] 只聊学习模式拦截非学习消息")
+        yield event.plain_result(
+            str(self.config.get("study_only_message") or "这里只聊学习相关的问题，其他话题先放一放。")
+        )
+
     @filter.event_message_type(filter.EventMessageType.ALL, priority=100)
     async def refuse_dangerous(self, event: AstrMessageEvent):
         """危险化学品请求直接拒答，不交给模型。"""

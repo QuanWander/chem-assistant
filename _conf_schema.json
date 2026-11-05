@@ -39,5 +39,29 @@
     "description": "调试日志",
     "type": "bool",
     "default": false
+  },
+  "study_only_enabled": {
+    "description": "只聊学习模式",
+    "type": "bool",
+    "hint": "开启后，下面名单里的群/用户只能问学习、化学、作业、考试；其他话题直接拒答。",
+    "default": false
+  },
+  "study_only_groups": {
+    "description": "只聊学习的群号",
+    "type": "list",
+    "hint": "群号列表；留空表示不限制群。",
+    "default": []
+  },
+  "study_only_users": {
+    "description": "只聊学习的 QQ 号",
+    "type": "list",
+    "hint": "QQ 号列表；留空表示不限制用户。",
+    "default": []
+  },
+  "study_only_message": {
+    "description": "非学习话题的回复",
+    "type": "string",
+    "hint": "命中只聊学习模式、但消息不是学习内容时，回复这句话。",
+    "default": "这里只聊学习相关的问题，其他话题先放一放。"
   }
 }
