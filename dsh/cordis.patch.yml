@@ -1,0 +1,10 @@
+- insert:
+    - id: chem-assistant-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: chem_assistant
+        transport: stdio
+        command: 'E:\QQ机器人\AstrBot\.venv\Scripts\python.exe'
+        args: ['-m', 'adapters.mcp.server']
+        cwd: 'E:\QQ机器人\发布\chem-assistant'
+        failOnStartupError: true
